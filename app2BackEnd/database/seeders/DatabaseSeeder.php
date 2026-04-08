@@ -18,10 +18,14 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'admin123@gmail.com',
-            "password"=>Hash::make("admin123")
-        ]);
+        // 🛡️ Only create the user if the email is not already in the database
+        if (!User::where('email', 'admin123@gmail.com')->exists()) {
+            User::create([
+                'name' => 'Aziz',
+                'email' => 'admin123@gmail.com',
+                'password' => Hash::make('admin123'),
+            ]);
+            
+        }
     }
 }

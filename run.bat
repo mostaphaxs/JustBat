@@ -19,16 +19,38 @@ if exist "%BACKEND_DIR%" (
 
 set DB_DATABASE=%CD%\%TARGET_BACKEND%\database\database.sqlite
 
-echo Starting MyAmical Application...
+:: 2. Initialize Database
+echo [PROCESS] Checking Database at %DB_DATABASE%...
+if not exist "%DB_DATABASE%" (
+    echo [INFO] Database file not found. Creating a new one...
+    for %%I in ("%DB_DATABASE%") do if not exist "%%~dpI" mkdir "%%~dpI"
+    copy /y nul "%DB_DATABASE%" >nul
+    if errorlevel 1 (
+        echo [ERROR] Failed to create database file at %DB_DATABASE%
+        pause
+        exit /b
+    )
+    echo [SUCCESS] Database file created.
+)
 
-:: 2. Start Backend in a separate window
-echo Starting Backend (Laravel) in %TARGET_BACKEND%...
 cd %TARGET_BACKEND%
+echo [PROCESS] Synchronizing Database schema (Migrations)...
+php artisan migrate --force --no-interaction
+if errorlevel 1 (
+    echo [ERROR] Migration failed! Please check your PHP installation and .env file.
+    cd ..
+    pause
+    exit /b
+)
+echo [SUCCESS] Database is ready.
+
+:: 3. Start Backend in a separate window
+echo [PROCESS] Starting Backend server on port 8000...
 start "MyAmical Backend" /min php artisan serve --port=8000
 cd ..
 
-:: 3. Start Frontend
-echo Starting Frontend (%FRONTEND_EXE%)...
+:: 4. Start Frontend
+echo [PROCESS] Starting Frontend (%FRONTEND_EXE%)...
 if exist "%FRONTEND_EXE%" (
     start "" "%FRONTEND_EXE%"
 ) else (

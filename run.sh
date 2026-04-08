@@ -13,19 +13,39 @@ fi
 
 export DB_DATABASE="$(pwd)/$TARGET_BACKEND/database/database.sqlite"
 
-echo "Starting MyAmical Application..."
+# 2. Initialize Database
+echo "[PROCESS] Checking Database at $DB_DATABASE..."
+if [ ! -f "$DB_DATABASE" ]; then
+    echo "[INFO] Database file not found. Creating a new one..."
+    mkdir -p "$(dirname "$DB_DATABASE")"
+    touch "$DB_DATABASE"
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Failed to create database file at $DB_DATABASE"
+        exit 1
+    fi
+    echo "[SUCCESS] Database file created."
+fi
 
-# 2. Start Backend in the background
-echo "Starting Backend (Laravel) in $TARGET_BACKEND..."
 cd "$TARGET_BACKEND"
+echo "[PROCESS] Synchronizing Database schema (Migrations)..."
+php artisan migrate --force --no-interaction
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Migration failed! Please check your PHP installation and .env file."
+    cd ..
+    exit 1
+fi
+echo "[SUCCESS] Database is ready."
+
+# 3. Start Backend in the background
+echo "[PROCESS] Starting Backend server on port 8000..."
 # Start server and redirect output to a log file
 php artisan serve --port=8000 > ../backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
-echo "Backend started with PID $BACKEND_PID"
+echo "[SUCCESS] Backend started with PID $BACKEND_PID"
 
-# 3. Start Frontend
-echo "Starting Frontend ($FRONTEND_BIN)..."
+# 4. Start Frontend
+echo "[PROCESS] Starting Frontend ($FRONTEND_BIN)..."
 if [ -f "$FRONTEND_BIN" ]; then
     chmod +x "$FRONTEND_BIN"
     "$FRONTEND_BIN"

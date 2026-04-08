@@ -44,7 +44,8 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "icons/**/*"
+      "icons/**/*",
+      "../../app2BackEnd/**/*"
     ]
   }
 }

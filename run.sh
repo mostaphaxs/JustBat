@@ -1,28 +1,30 @@
 #!/bin/bash
 
 # Configuration
-BACKEND_DIR="app2BackEnd"
-FRONTEND_BIN="./MyAmical"
-export APP_API_URL="http://127.0.0.1:8000/api"
-export DB_DATABASE="$(pwd)/$BACKEND_DIR/database/database.sqlite"
-
-echo "Starting MyAmical Application..."
-
-# 1. Start Backend in the background
-echo "Starting Backend (Laravel)..."
+# 1. Detect Backend Location
 if [ -d "$BACKEND_DIR" ]; then
-    cd "$BACKEND_DIR"
-    # Start server and redirect output to a log file
-    php artisan serve --port=8000 > ../backend.log 2>&1 &
-    BACKEND_PID=$!
-    cd ..
-    echo "Backend started with PID $BACKEND_PID"
+    TARGET_BACKEND="$BACKEND_DIR"
+elif [ -d "resources/$BACKEND_DIR" ]; then
+    TARGET_BACKEND="resources/$BACKEND_DIR"
 else
-    echo "[ERROR] $BACKEND_DIR not found!"
+    echo "[ERROR] $BACKEND_DIR folder not found!"
     exit 1
 fi
 
-# 2. Start Frontend
+export DB_DATABASE="$(pwd)/$TARGET_BACKEND/database/database.sqlite"
+
+echo "Starting MyAmical Application..."
+
+# 2. Start Backend in the background
+echo "Starting Backend (Laravel) in $TARGET_BACKEND..."
+cd "$TARGET_BACKEND"
+# Start server and redirect output to a log file
+php artisan serve --port=8000 > ../backend.log 2>&1 &
+BACKEND_PID=$!
+cd ..
+echo "Backend started with PID $BACKEND_PID"
+
+# 3. Start Frontend
 echo "Starting Frontend ($FRONTEND_BIN)..."
 if [ -f "$FRONTEND_BIN" ]; then
     chmod +x "$FRONTEND_BIN"

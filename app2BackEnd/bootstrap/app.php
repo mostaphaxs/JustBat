@@ -15,16 +15,22 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(\App\Http\Middleware\ForceCors::class);
         $middleware->append(\App\Http\Middleware\ParseFrenchDates::class);
     })
-    ->withRegistered(function ($app) {
-        if ($app->environment('production')) {
-            $storage = env('LARAVEL_STORAGE_PATH', '/tmp/myamical-storage');
+    ->registered(function ($app) {
+        // 🐘 SIDE-CAR FIX (V4): Always prioritize side-car injected paths
+        $storage = env('LARAVEL_STORAGE_PATH');
+        if ($storage) {
             $app->useStoragePath($storage);
-            
-            // Force the DB path so migrations use the same file as the server
-            $dbPath = env('DB_DATABASE');
-            if ($dbPath) {
-                config(['database.connections.sqlite.database' => $dbPath]);
-            }
+            // Also update the config for all disks that depend on storage_path()
+            config(['filesystems.disks.public.root' => $storage . '/app/public']);
+            config(['filesystems.disks.local.root' => $storage . '/app/private']);
+        }
+        
+        $dbPath = env('DB_DATABASE');
+        if ($dbPath) {
+            // Set both the config and the env to be sure
+            config(['database.connections.sqlite.database' => $dbPath]);
+            $_ENV['DB_DATABASE'] = $dbPath;
+            putenv("DB_DATABASE={$dbPath}");
         }
     })
     ->withExceptions(function (Exceptions $exceptions): void {

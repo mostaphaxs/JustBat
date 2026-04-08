@@ -34,6 +34,11 @@ if not exist "%DB_DATABASE%" (
 )
 
 cd %TARGET_BACKEND%
+
+:: 3. Prevent Duplicate Processes (Close existing PHP server on port 8000)
+echo [PROCESS] Closing any existing backend server...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8000') do taskkill /f /pid %%a >nul 2>&1
+
 echo [PROCESS] Synchronizing Database schema (Migrations)...
 php artisan migrate --force --no-interaction
 if errorlevel 1 (

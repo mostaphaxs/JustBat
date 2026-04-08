@@ -27,6 +27,11 @@ if [ ! -f "$DB_DATABASE" ]; then
 fi
 
 cd "$TARGET_BACKEND"
+
+# 3. Prevent Duplicate Processes (Close existing PHP server on port 8000)
+echo "[PROCESS] Closing any existing backend server..."
+fuser -k 8000/tcp > /dev/null 2>&1
+
 echo "[PROCESS] Synchronizing Database schema (Migrations)..."
 php artisan migrate --force --no-interaction
 if [ $? -ne 0 ]; then

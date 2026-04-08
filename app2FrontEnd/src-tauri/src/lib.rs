@@ -30,9 +30,18 @@ fn open_url(url: String) -> Result<(), String> {
 
 #[tauri::command]
 async fn import_database(app_handle: tauri::AppHandle, source_path: String) -> Result<String, String> {
-    let app_data_dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
-    let db_path = app_data_dir.join("database.sqlite");
+    // Portability: Find the database path next to the executable
+    let app_dir = app_handle.path().app_local_data_dir().map_err(|e| e.to_string())?;
+    // However, the user wants the DB in app2BackEnd/database/database.sqlite
+    // We can resolve this relative to the current working directory or the app resource dir
+    let resource_dir = app_handle.path().resource_dir().map_err(|e| e.to_string())?;
     
+    // Check local folder first (portable), then resources (installed)
+    let mut db_path = std::env::current_dir().unwrap_or_default().join("app2BackEnd/database/database.sqlite");
+    if !db_path.exists() {
+        db_path = resource_dir.join("app2BackEnd/database/database.sqlite");
+    }
+
     let source = std::path::PathBuf::from(source_path);
     if !source.exists() {
         return Err("Le fichier source n'existe pas.".to_string());
@@ -46,8 +55,12 @@ async fn import_database(app_handle: tauri::AppHandle, source_path: String) -> R
 
 #[tauri::command]
 async fn export_database(app_handle: tauri::AppHandle, destination_path: String) -> Result<String, String> {
-    let app_data_dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
-    let db_path = app_data_dir.join("database.sqlite");
+    let resource_dir = app_handle.path().resource_dir().map_err(|e| e.to_string())?;
+    
+    let mut db_path = std::env::current_dir().unwrap_or_default().join("app2BackEnd/database/database.sqlite");
+    if !db_path.exists() {
+        db_path = resource_dir.join("app2BackEnd/database/database.sqlite");
+    }
     
     if !db_path.exists() {
         return Err("La base de données actuelle n'existe pas.".to_string());

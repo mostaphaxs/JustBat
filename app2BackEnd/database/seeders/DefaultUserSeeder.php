@@ -12,6 +12,7 @@ class DefaultUserSeeder extends Seeder
     /**
      * Run the database seeds.
      */
+    
     public function run(): void
     {
         // 🛡️ Only create the user if the email is not already in the database
